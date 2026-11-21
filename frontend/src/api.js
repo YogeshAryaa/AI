@@ -8,10 +8,16 @@ const defaultBase = () =>
 // "localhost:8000", " http://localhost:8000/ ", "http//localhost:8000", "http://localhost:8000/health"
 // all become "http://localhost:8000". A wrong address would otherwise hit this app's own page.
 export function cleanBase(raw) {
-  let b = String(raw || "").replace(/\s+/g, "");
+  let b = String(raw || "").trim();
   if (!b) return defaultBase();
-  b = b.replace(/^(https?)[:/]*/i, "$1://");
-  if (!/^https?:\/\//i.test(b)) b = "http://" + b.replace(/^\/+/, "");
+  // Extract the first clean URL if pasted with brackets or duplicate URL strings
+  const m = b.match(/https?:\/\/[^\s()]+/i);
+  if (m) {
+    b = m[0];
+  } else {
+    b = b.replace(/^(https?)[:/]*/i, "$1://");
+    if (!/^https?:\/\//i.test(b)) b = "http://" + b.replace(/^\/+/, "");
+  }
   try {
     const u = new URL(b);
     const path = u.pathname.replace(/\/(health|docs|chat|providers)(\/.*)?$/i, "").replace(/\/+$/, "");
