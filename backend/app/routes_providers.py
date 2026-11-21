@@ -14,21 +14,38 @@ router = APIRouter(prefix="/providers", tags=["providers"], dependencies=[Depend
 
 # Starting points only: model names change often. `model` can hold several models separated by commas;
 # they are tried in order, so a retired model never breaks the provider. Use GET /providers/{id}/models to see what is live.
+# Curated from https://github.com/open-free-llm-api/awesome-freellm-apis (permanent & generous free-tier APIs)
 PRESETS = [
     {"key": "gemini", "name": "Google Gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
-     "model_hint": "gemini-3.8-flash, gemini-3.5-flash, gemini-3.1-flash-lite", "trusted": False, "key_url": "https://aistudio.google.com/apikey"},
-    {"key": "groq", "name": "Groq", "base_url": "https://api.groq.com/openai/v1",
-     "model_hint": "llama-3.3-70b-versatile", "trusted": False, "key_url": "https://console.groq.com/keys"},
-    {"key": "openrouter", "name": "OpenRouter", "base_url": "https://openrouter.ai/api/v1",
-     "model_hint": "meta-llama/llama-3.3-70b-instruct:free", "trusted": False, "key_url": "https://openrouter.ai/keys"},
-    {"key": "mistral", "name": "Mistral", "base_url": "https://api.mistral.ai/v1",
-     "model_hint": "mistral-small-latest", "trusted": False, "key_url": "https://console.mistral.ai/api-keys"},
+     "model_hint": "gemini-2.5-flash, gemini-2.5-flash-lite, gemini-2.0-flash", "trusted": False, "key_url": "https://aistudio.google.com/apikey", "rpm_limit": 15, "category": "Popular Free APIs", "note": "15 RPM, generous free tier in Google AI Studio"},
+    {"key": "groq", "name": "Groq (Ultra-Fast LPUs)", "base_url": "https://api.groq.com/openai/v1",
+     "model_hint": "llama-3.3-70b-versatile, llama-3.1-8b-instant", "trusted": False, "key_url": "https://console.groq.com/keys", "rpm_limit": 30, "category": "Ultra-Fast Hardware Inference", "note": "30 RPM, 14,400 RPD, ~300+ tok/s"},
+    {"key": "sambanova", "name": "SambaNova Cloud", "base_url": "https://api.sambanova.ai/v1",
+     "model_hint": "Meta-Llama-3.3-70B-Instruct, Qwen2.5-72B-Instruct", "trusted": False, "key_url": "https://cloud.sambanova.ai/apis", "rpm_limit": 20, "category": "Ultra-Fast Hardware Inference", "note": "20 RPM, free tier, fast 70B & 72B inference"},
     {"key": "cerebras", "name": "Cerebras", "base_url": "https://api.cerebras.ai/v1",
-     "model_hint": "llama3.1-8b", "trusted": False, "key_url": "https://cloud.cerebras.ai"},
+     "model_hint": "llama3.3-70b, llama3.1-8b", "trusted": False, "key_url": "https://cloud.cerebras.ai", "rpm_limit": 30, "category": "Ultra-Fast Hardware Inference", "note": "30 RPM, ~1000 tok/s on CS-3"},
+    {"key": "openrouter", "name": "OpenRouter (Free Models)", "base_url": "https://openrouter.ai/api/v1",
+     "model_hint": "meta-llama/llama-3.3-70b-instruct:free, deepseek/deepseek-r1:free", "trusted": False, "key_url": "https://openrouter.ai/keys", "rpm_limit": 20, "category": "Aggregators & Multi-Model", "note": "Rotating roster of models tagged with :free"},
+    {"key": "github_models", "name": "GitHub Models (Azure AI)", "base_url": "https://models.inference.ai.azure.com",
+     "model_hint": "gpt-4o-mini, Meta-Llama-3.3-70B-Instruct", "trusted": False, "key_url": "https://github.com/marketplace/models", "rpm_limit": 15, "category": "Popular Free APIs", "note": "Free prototyping tier with standard GitHub Personal Access Token"},
+    {"key": "nvidia_nim", "name": "NVIDIA NIM", "base_url": "https://integrate.api.nvidia.com/v1",
+     "model_hint": "meta/llama-3.3-70b-instruct, deepseek-ai/deepseek-r1", "trusted": False, "key_url": "https://build.nvidia.com", "rpm_limit": 40, "category": "Popular Free APIs", "note": "1,000 free API calls for enterprise-tuned models"},
+    {"key": "mistral", "name": "Mistral AI", "base_url": "https://api.mistral.ai/v1",
+     "model_hint": "mistral-small-latest, ministral-8b-latest, codestral-latest", "trusted": False, "key_url": "https://console.mistral.ai/api-keys", "rpm_limit": 30, "category": "Popular Free APIs", "note": "Free experimentation tier (1 req/sec)"},
+    {"key": "cohere", "name": "Cohere", "base_url": "https://api.cohere.ai/compatibility/v1",
+     "model_hint": "command-r, command-r-plus, aya-expanse-32b", "trusted": False, "key_url": "https://dashboard.cohere.com/api-keys", "rpm_limit": 20, "category": "Popular Free APIs", "note": "Trial key with 1,000 calls/month"},
+    {"key": "together", "name": "Together AI", "base_url": "https://api.together.xyz/v1",
+     "model_hint": "meta-llama/Llama-3.3-70B-Instruct-Turbo", "trusted": False, "key_url": "https://api.together.xyz/settings/api-keys", "rpm_limit": 10, "category": "Cloud Inference Providers", "note": "Free developer trial balance"},
+    {"key": "deepinfra", "name": "DeepInfra", "base_url": "https://api.deepinfra.com/v1/openai",
+     "model_hint": "meta-llama/Meta-Llama-3.3-70B-Instruct", "trusted": False, "key_url": "https://deepinfra.com/dash/api_keys", "rpm_limit": 10, "category": "Cloud Inference Providers", "note": "Serverless open-weights models"},
+    {"key": "hyperbolic", "name": "Hyperbolic", "base_url": "https://api.hyperbolic.xyz/v1",
+     "model_hint": "meta-llama/Llama-3.3-70B-Instruct", "trusted": False, "key_url": "https://app.hyperbolic.xyz", "rpm_limit": 10, "category": "Cloud Inference Providers", "note": "Decentralized inference tier"},
+    {"key": "huggingface", "name": "Hugging Face Inference", "base_url": "https://api-inference.huggingface.co/v1",
+     "model_hint": "meta-llama/Llama-3.2-3B-Instruct, Qwen/Qwen2.5-72B-Instruct", "trusted": False, "key_url": "https://huggingface.co/settings/tokens", "rpm_limit": 10, "category": "Cloud Inference Providers", "note": "Free serverless inference with HF user token"},
     # Local = private and free, but slow on CPU. qwen2.5:3b handles Hindi/Hinglish well; keep it small.
     {"key": "ollama", "name": "Ollama (local)", "base_url": "http://localhost:11434/v1",
-     "model_hint": "qwen2.5:3b, llama3.2:3b", "trusted": True, "key_url": None, "timeout_seconds": 300},
-    {"key": "custom", "name": "Custom OpenAI-compatible", "base_url": "", "model_hint": "", "trusted": False, "key_url": None},
+     "model_hint": "qwen2.5:3b, llama3.2:3b", "trusted": True, "key_url": None, "timeout_seconds": 300, "category": "Local & Offline", "note": "Completely offline and private"},
+    {"key": "custom", "name": "Custom OpenAI-compatible", "base_url": "", "model_hint": "", "trusted": False, "key_url": None, "category": "Custom"},
 ]
 
 

@@ -1,0 +1,221 @@
+[
+  {
+    "id": "gemini",
+    "name": "Google Gemini",
+    "category": "Popular Free APIs",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "key_url": "https://aistudio.google.com/apikey",
+    "credit_card_required": false,
+    "rpm_limit": 15,
+    "rpd_limit": 1500,
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash"
+    ],
+    "description": "State-of-the-art multilingual multimodal models with free tier in Google AI Studio. Excellent for English, Hindi, Hinglish, reasoning, and long context."
+  },
+  {
+    "id": "groq",
+    "name": "Groq",
+    "category": "Ultra-Fast Hardware Inference",
+    "base_url": "https://api.groq.com/openai/v1",
+    "key_url": "https://console.groq.com/keys",
+    "credit_card_required": false,
+    "rpm_limit": 30,
+    "rpd_limit": 14400,
+    "models": [
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+      "mixtral-8x7b-32768"
+    ],
+    "description": "Custom Language Processing Units (LPUs) delivering 300-500+ tokens/second. Permanent free tier with high daily limits."
+  },
+  {
+    "id": "sambanova",
+    "name": "SambaNova Cloud",
+    "category": "Ultra-Fast Hardware Inference",
+    "base_url": "https://api.sambanova.ai/v1",
+    "key_url": "https://cloud.sambanova.ai/apis",
+    "credit_card_required": false,
+    "rpm_limit": 20,
+    "rpd_limit": null,
+    "models": [
+      "Meta-Llama-3.3-70B-Instruct",
+      "Qwen2.5-72B-Instruct",
+      "Meta-Llama-3.1-8B-Instruct"
+    ],
+    "description": "SN40L AI chips running massive 70B and 72B models at incredible speeds for free."
+  },
+  {
+    "id": "cerebras",
+    "name": "Cerebras",
+    "category": "Ultra-Fast Hardware Inference",
+    "base_url": "https://api.cerebras.ai/v1",
+    "key_url": "https://cloud.cerebras.ai",
+    "credit_card_required": false,
+    "rpm_limit": 30,
+    "rpd_limit": 14400,
+    "models": [
+      "llama3.3-70b",
+      "llama3.1-8b"
+    ],
+    "description": "Wafer-Scale Engine CS-3 serving Llama models up to 1,000+ tokens/second."
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "category": "Aggregators & Multi-Model",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_url": "https://openrouter.ai/keys",
+    "credit_card_required": false,
+    "rpm_limit": 20,
+    "rpd_limit": 50,
+    "models": [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "deepseek/deepseek-r1:free",
+      "google/gemini-2.0-flash-exp:free"
+    ],
+    "description": "Aggregates free community models tagged with ':free' without requiring credit card."
+  },
+  {
+    "id": "github_models",
+    "name": "GitHub Models",
+    "category": "Popular Free APIs",
+    "base_url": "https://models.inference.ai.azure.com",
+    "key_url": "https://github.com/marketplace/models",
+    "credit_card_required": false,
+    "rpm_limit": 15,
+    "rpd_limit": 150,
+    "models": [
+      "gpt-4o-mini",
+      "Meta-Llama-3.3-70B-Instruct",
+      "Mistral-large-2407"
+    ],
+    "description": "Free prototyping models hosted on Azure AI for developers with a standard GitHub account."
+  },
+  {
+    "id": "nvidia_nim",
+    "name": "NVIDIA NIM",
+    "category": "Popular Free APIs",
+    "base_url": "https://integrate.api.nvidia.com/v1",
+    "key_url": "https://build.nvidia.com",
+    "credit_card_required": false,
+    "rpm_limit": 40,
+    "rpd_limit": 1000,
+    "models": [
+      "meta/llama-3.3-70b-instruct",
+      "deepseek-ai/deepseek-r1",
+      "mistralai/mistral-large-2-instruct"
+    ],
+    "description": "NVIDIA enterprise-optimized inference microservices with free trial credits for developers."
+  },
+  {
+    "id": "mistral",
+    "name": "Mistral AI",
+    "category": "Popular Free APIs",
+    "base_url": "https://api.mistral.ai/v1",
+    "key_url": "https://console.mistral.ai/api-keys",
+    "credit_card_required": false,
+    "rpm_limit": 30,
+    "rpd_limit": null,
+    "models": [
+      "mistral-small-latest",
+      "ministral-8b-latest",
+      "codestral-latest"
+    ],
+    "description": "La Plateforme free experimentation tier (1 req/sec) with high token allowance."
+  },
+  {
+    "id": "cohere",
+    "name": "Cohere",
+    "category": "Popular Free APIs",
+    "base_url": "https://api.cohere.ai/compatibility/v1",
+    "key_url": "https://dashboard.cohere.com/api-keys",
+    "credit_card_required": false,
+    "rpm_limit": 20,
+    "rpd_limit": 1000,
+    "models": [
+      "command-r",
+      "command-r-plus",
+      "aya-expanse-32b"
+    ],
+    "description": "High-quality RAG and multilingual models (Aya Expanse) with trial developer keys."
+  },
+  {
+    "id": "together",
+    "name": "Together AI",
+    "category": "Cloud Inference Providers",
+    "base_url": "https://api.together.xyz/v1",
+    "key_url": "https://api.together.xyz/settings/api-keys",
+    "credit_card_required": false,
+    "rpm_limit": 10,
+    "rpd_limit": null,
+    "models": [
+      "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "Qwen/Qwen2.5-72B-Instruct-Turbo"
+    ],
+    "description": "Fast serverless inference with complimentary trial balance for new developers."
+  },
+  {
+    "id": "deepinfra",
+    "name": "DeepInfra",
+    "category": "Cloud Inference Providers",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "key_url": "https://deepinfra.com/dash/api_keys",
+    "credit_card_required": false,
+    "rpm_limit": 10,
+    "rpd_limit": null,
+    "models": [
+      "meta-llama/Meta-Llama-3.3-70B-Instruct",
+      "Qwen/Qwen2.5-72B-Instruct"
+    ],
+    "description": "Serverless inference for open-weights models with free starting balance."
+  },
+  {
+    "id": "hyperbolic",
+    "name": "Hyperbolic",
+    "category": "Cloud Inference Providers",
+    "base_url": "https://api.hyperbolic.xyz/v1",
+    "key_url": "https://app.hyperbolic.xyz",
+    "credit_card_required": false,
+    "rpm_limit": 10,
+    "rpd_limit": null,
+    "models": [
+      "meta-llama/Llama-3.3-70B-Instruct",
+      "deepseek-ai/DeepSeek-V3"
+    ],
+    "description": "Decentralized open GPU network offering free-tier access to frontier open models."
+  },
+  {
+    "id": "huggingface",
+    "name": "Hugging Face Inference API",
+    "category": "Cloud Inference Providers",
+    "base_url": "https://api-inference.huggingface.co/v1",
+    "key_url": "https://huggingface.co/settings/tokens",
+    "credit_card_required": false,
+    "rpm_limit": 10,
+    "rpd_limit": null,
+    "models": [
+      "meta-llama/Llama-3.2-3B-Instruct",
+      "Qwen/Qwen2.5-72B-Instruct"
+    ],
+    "description": "Serverless OpenAI-compatible inference router across community models using free user tokens."
+  },
+  {
+    "id": "ollama",
+    "name": "Ollama (local)",
+    "category": "Local & Offline",
+    "base_url": "http://localhost:11434/v1",
+    "key_url": null,
+    "credit_card_required": false,
+    "rpm_limit": 0,
+    "rpd_limit": null,
+    "models": [
+      "qwen2.5:3b",
+      "llama3.2:3b"
+    ],
+    "description": "100% private, offline, zero API keys required. Runs on your own PC or server."
+  }
+]

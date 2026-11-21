@@ -44,6 +44,16 @@ Without any AI provider the app still replies: greetings are answered instantly,
 data get the stored answer, anything else gets a polite "not in my data" reply. With providers added, they are
 tried in order (top first); one that errors or hits its limit is paused and the next is used automatically.
 
+### Awesome Free LLM APIs (Built-in Support)
+
+Integrated with curated providers from [awesome-freellm-apis](https://github.com/open-free-llm-api/awesome-freellm-apis):
+* **Ultra-Fast LPUs & CS-3**: Groq (30 RPM, ~300 tok/s), SambaNova Cloud (20 RPM), Cerebras (30 RPM, ~1000 tok/s).
+* **Frontier & Open Weights**: Google Gemini, GitHub Models (GPT-4o-mini & Llama), NVIDIA NIM, Mistral AI, OpenRouter.
+* **Serverless & Decentralized**: Cohere, Together AI, DeepInfra, Hyperbolic, Hugging Face Inference.
+* **Local & Private**: Ollama (Qwen 2.5, Llama 3.2).
+
+Explore or test them via the UI (*AI providers* tab) or with `python backend/scripts/setup_free_apis.py list`. Full guide: [docs/AWESOME_FREE_LLM_APIS.md](docs/AWESOME_FREE_LLM_APIS.md).
+
 ## Deploy on a server (one command)
 
 ```bash

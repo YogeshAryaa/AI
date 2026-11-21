@@ -5,6 +5,7 @@ const EMPTY = { name: "", base_url: "", model: "", api_key: "", trusted: false, 
 
 function AddForm({ presets, onAdded, count }) {
   const [f, setF] = useState(EMPTY);
+  const [selectedPreset, setSelectedPreset] = useState(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
@@ -12,8 +13,24 @@ function AddForm({ presets, onAdded, count }) {
   function pick(key) {
     const p = presets.find((x) => x.key === key);
     if (!p) return;
-    setF({ ...EMPTY, name: p.name, base_url: p.base_url, model: p.model_hint, trusted: p.trusted, timeout_seconds: p.timeout_seconds || 0 });
+    setSelectedPreset(p);
+    setF({
+      ...EMPTY,
+      name: p.name,
+      base_url: p.base_url,
+      model: p.model_hint,
+      trusted: Boolean(p.trusted),
+      timeout_seconds: p.timeout_seconds || 0,
+      rpm_limit: p.rpm_limit || 0,
+    });
   }
+
+  const grouped = presets.reduce((acc, p) => {
+    const cat = p.category || "Other";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(p);
+    return acc;
+  }, {});
 
   async function submit(e) {
     e.preventDefault();
@@ -22,6 +39,7 @@ function AddForm({ presets, onAdded, count }) {
     try {
       await api.addProvider({ ...f, rpm_limit: Number(f.rpm_limit) || 0, timeout_seconds: Number(f.timeout_seconds) || 0, priority: (count + 1) * 10 });
       setF(EMPTY);
+      setSelectedPreset(null);
       onAdded();
     } catch (e2) {
       setErr(e2.message);
@@ -31,14 +49,27 @@ function AddForm({ presets, onAdded, count }) {
 
   return (
     <form className="add" onSubmit={submit}>
-      <h2>Add an AI provider</h2>
+      <h2>Add an AI provider (Free Tier Catalog)</h2>
       <label>
         Start from
         <select onChange={(e) => pick(e.target.value)} defaultValue="">
           <option value="" disabled>Choose a provider…</option>
-          {presets.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
+          {Object.entries(grouped).map(([cat, list]) => (
+            <optgroup key={cat} label={cat}>
+              {list.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
+            </optgroup>
+          ))}
         </select>
       </label>
+      {selectedPreset?.key_url && (
+        <div style={{ background: "color-mix(in srgb, var(--data) 12%, transparent)", border: "1px solid var(--data)", borderRadius: "8px", padding: "0.6rem 0.8rem", fontSize: "0.88rem" }}>
+          <span>Need a free API key? </span>
+          <a href={selectedPreset.key_url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--data)", fontWeight: 600 }}>
+            Get free API key on {selectedPreset.name} ↗
+          </a>
+          {selectedPreset.note && <div style={{ color: "var(--muted)", marginTop: "0.2rem", fontSize: "0.8rem" }}>{selectedPreset.note}</div>}
+        </div>
+      )}
       <div className="grid2">
         <label>Name<input required value={f.name} onChange={(e) => set("name", e.target.value)} /></label>
         <label>Model<input required value={f.model} onChange={(e) => set("model", e.target.value)} /></label>
