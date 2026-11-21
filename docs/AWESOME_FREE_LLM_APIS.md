@@ -71,3 +71,4 @@ Chain providers in this priority order in the UI:
 3. **SambaNova Cloud** (`Meta-Llama-3.3-70B-Instruct`): Backup 70B inference engine.
 4. **Cerebras** (`llama3.3-70b`): Secondary hardware-accelerated backup.
 5. **Ollama** (`qwen2.5:3b`): Local offline fallback (answers even if internet is down).
+

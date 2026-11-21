@@ -14,6 +14,10 @@ RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 COPY backend/app ./app
+COPY backend/skills ./skills
+COPY backend/seed_data ./seed_data
+COPY backend/scripts ./scripts
+COPY backend/seed_data.py ./seed_data.py
 COPY --from=ui /ui/dist /app/frontend/dist
 # Download the embedding model at build time so the first start is fast
 ARG EMBEDDING_MODEL=intfloat/multilingual-e5-small

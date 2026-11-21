@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     env_file: backend/.env
     environment:
-      MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/?replicaSet=rs0}
       WORKERS: "2"
     depends_on:
       mongo: { condition: service_healthy }
