@@ -19,5 +19,9 @@ easyocr>=1.7
 pypdfium2>=4.30
 # Own image AI on this server (model downloads on first use; IMAGE_PROVIDER=local)
 diffusers>=0.32
+# LangChain & LangGraph for stateful Agentic RAG workflows
+langchain>=1.5.0
+langchain-core>=1.8.0
+langgraph>=1.2.0
 # Optional, ~2x faster embeddings on CPU (then set EMBEDDING_BACKEND=onnx):
 # optimum[onnxruntime]>=1.20

@@ -83,6 +83,7 @@ class Config(BaseSettings):
     skills_enabled: bool = True           # load matching skills (and the skills linked to them) into AI answers
     skills_use_database: bool = True      # add close records from your database to skill-guided answers
     ollama_warmup: bool = True            # load the local Ollama model into memory at start-up
+    use_langgraph: bool = True            # use LangGraph StateGraph engine for chat and Agentic RAG
 
     # --- connected apps (Slack, Discord, Telegram, email, webhooks)
     allow_private_app_urls: bool = False  # true = may connect tools on your own network (n8n, internal webhooks)

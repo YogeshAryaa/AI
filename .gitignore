@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 dist/
 ollama-windows-amd64.zip
+tools/
+
