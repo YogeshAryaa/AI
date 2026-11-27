@@ -28,9 +28,8 @@ DOC_PREFIX=
 # torch | onnx (onnx ~2x faster on CPU, needs: pip install "optimum[onnxruntime]")
 EMBEDDING_BACKEND=torch
 EMBEDDING_BATCH_SIZE=64
-# Optional re-ranker for higher accuracy (+~0.2 s per question, ~500 MB download):
-# RERANKER_MODEL=cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
-RERANKER_MODEL=
+# FlashRank multilingual reranker for internal and web results (model downloads on first use).
+RERANKER_MODEL=ms-marco-MultiBERT-L-12
 
 # ======================= Vector search =======================
 # local = in this server's memory (any MongoDB; ~1.5 GB RAM per 1M pieces with float32)

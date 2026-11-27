@@ -717,7 +717,8 @@ async def _remake_events(question, prev: dict, owner, user_id, conversation_id):
 
 # ------------------------------------------------------------------ entry point used by the chat routes
 async def run(question: str, history: list[dict], mode: str, namespaces, allow_ai,
-              owner: str, user_id: str | None = None, conversation_id: str | None = None):
+              owner: str, user_id: str | None = None, conversation_id: str | None = None,
+              web_search: bool = False):
     """Same events as chat.run_chat, plus {"type": "file", "file": {...}} when a file was made."""
     want = detect(question) if cfg.chat_files else None
     if cfg.chat_files and _is_followup(question):
@@ -748,5 +749,5 @@ async def run(question: str, history: list[dict], mode: str, namespaces, allow_a
         async for ev in _image_events(question, history, owner, user_id, conversation_id, use_ai=mode != "search"):
             yield ev
     else:
-        async for ev in run_chat(question, history, mode, namespaces, allow_ai):
+        async for ev in run_chat(question, history, mode, namespaces, allow_ai, web_search=web_search):
             yield ev

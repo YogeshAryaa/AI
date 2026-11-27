@@ -4,11 +4,16 @@ motor>=3.4
 pydantic>=2.6
 pydantic-settings>=2.2
 httpx>=0.27
+beautifulsoup4>=4.12
+polars>=1.0
+unstructured>=0.15
+flashrank>=0.2.10
 numpy>=1.26
 sentence-transformers>=3.0
 cryptography>=42.0
 python-multipart>=0.0.9
 pypdf>=4.0
+Pygments>=2.17
 openpyxl>=3.1
 python-docx>=1.1
 # PDFs the AI makes in the chat (uharfbuzz joins Hindi letters correctly)

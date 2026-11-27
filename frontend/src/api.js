@@ -110,6 +110,7 @@ export const api = {
   runSyncSource: (name) => req(`/sync/sources/${enc(name)}/run`, { method: "POST" }),
   deleteSyncSource: (name) => req(`/sync/sources/${enc(name)}`, { method: "DELETE" }),
   saveQA: (json) => req("/knowledge/qa", { method: "POST", json }),
+  highlightCode: (codes) => req("/chat/highlight", { method: "POST", json: { codes } }),
   settings: () => req("/settings"),
   saveSettings: (json) => req("/settings", { method: "PUT", json }),
   calibrate: () => req("/settings/calibrate", { method: "POST" }),

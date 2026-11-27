@@ -29,7 +29,7 @@ class Config(BaseSettings):
     embedding_backend: str = "torch"      # torch | onnx (onnx is ~2x faster on CPU, needs optimum[onnxruntime])
     embedding_batch_size: int = 64
     embedding_threads: int = 0            # 0 = let torch decide
-    reranker_model: str = ""              # optional, e.g. cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+    reranker_model: str = "ms-marco-MultiBERT-L-12"  # FlashRank multilingual reranking model
 
     # --- vector search
     vector_backend: str = "local"         # local (in-process, any MongoDB) | atlas ($vectorSearch)

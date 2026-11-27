@@ -25,6 +25,14 @@ The match level is **measured automatically** from your data (`min_score_mode=au
 English/Hindi/Hinglish set the noise floor, real passages set the signal, and the cut-off sits between. It is
 re-measured when the data grows by 20%.
 
+In Chat, enable **Search the web too** to search public pages alongside your internal data. DuckDuckGo discovers
+pages, Unstructured extracts their text, Polars deduplicates results, and FlashRank reranks both web and database
+evidence before answer generation. This sends the question to DuckDuckGo and may add response time. Disable this
+option to keep the question within your own database and configured AI providers.
+
+Assistant messages render Markdown in the browser. Fenced code blocks are highlighted with Pygments through the
+authenticated `/chat/highlight` endpoint; raw HTML in model output is disabled.
+
 ## Who can call what
 
 | Caller | How | Can |

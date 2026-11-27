@@ -29,6 +29,7 @@ class ChatIn(BaseModel):
     save_history: bool = True
     namespaces: list[str] | None = None      # narrow the search (only within what the key allows)
     allow_ai_fallback: bool | None = None     # false = never answer from general AI knowledge
+    web_search: bool = False                  # opt-in public web retrieval (AI mode only)
 
 
 async def _prepare(p: Principal, body: ChatIn):
@@ -49,7 +50,7 @@ async def _events(p: Principal, body: ChatIn, namespaces, history, c):
     meta, parts, error, files = {}, [], None, []
     try:
         async for ev in media.run(body.question, history, body.mode, namespaces, body.allow_ai_fallback,
-                                  p.key_id, body.user_id, c["_id"] if c else None):
+                                  p.key_id, body.user_id, c["_id"] if c else None, body.web_search):
             if ev["type"] == "file":
                 files.append(ev["file"])
             elif ev["type"] == "meta":
@@ -129,6 +130,35 @@ async def get_file(fid: str, download: bool = False, user_id: str | None = None,
 # ---------------------------------------------------------------- history
 class RenameIn(BaseModel):
     title: str = Field(min_length=1, max_length=120)
+
+
+class HighlightIn(BaseModel):
+    codes: list[str] = Field(default=[], max_length=30)
+
+
+@router.post("/chat/highlight")
+async def highlight_code(body: HighlightIn, p: Principal = Depends(require("chat"))):
+    """Highlight fenced Markdown code using Pygments; unknown languages use plain text."""
+    from pygments import highlight
+    from pygments.formatters import HtmlFormatter
+    from pygments.lexers import TextLexer, get_lexer_by_name
+    from pygments.util import ClassNotFound
+
+    if sum(len(code) for code in body.codes) > 100000:
+        raise HTTPException(413, "Code highlighting request is too large")
+    formatter = HtmlFormatter(nowrap=True, classprefix="pg-")
+    results = []
+    for code in body.codes:
+        if len(code) > 20000:
+            results.append("")
+            continue
+        lang, _, source = code.partition("\0")
+        try:
+            lexer = get_lexer_by_name(lang.strip(), stripall=False) if lang.strip() else TextLexer()
+        except ClassNotFound:
+            lexer = TextLexer()
+        results.append(highlight(source, lexer, formatter))
+    return {"html": results}
 
 
 @router.get("/conversations")

@@ -10,7 +10,7 @@ from . import background, jobs, knowledge, vectors
 from .auth import Principal, require, require_admin
 from .config import cfg
 from .db import db, is_internal, list_databases, source_db, utcnow
-from .embeddings import embed_query, fingerprint, reranker_enabled
+from .embeddings import embed_query, fingerprint, reranker_model_name
 from .extract import SUPPORTED, document_text, kind_of, row_title, table_rows
 from .filters import FilterError, validate_filter
 from .runtime_settings import get_runtime, update_runtime
@@ -325,7 +325,7 @@ async def calibrate(_: Principal = Depends(require_admin)):
 async def status(_: Principal = Depends(require_admin)):
     meta = await db.settings.find_one({"_id": "index_meta"}) or {}
     return {
-        "embedding_model": cfg.embedding_model, "fingerprint": fingerprint(), "reranker": cfg.reranker_model if reranker_enabled() else None,
+        "embedding_model": cfg.embedding_model, "fingerprint": fingerprint(), "reranker": reranker_model_name(),
         "vector_backend": cfg.vector_backend, "vector_index": vectors.index.stats() if cfg.vector_backend != "atlas" else None,
         "chunks": await db.chunks.estimated_document_count(), "documents": await db.documents.estimated_document_count(),
         "reindex": meta.get("reindex"), "this_worker_runs_background_tasks": background.is_leader(),

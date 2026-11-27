@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import MarkdownIt from "markdown-it";
 import { api, streamChat } from "./api.js";
 import { FileCard } from "./Files.jsx";
 
@@ -8,6 +9,8 @@ function Route({ phase }) {
     idle: "Ready",
     searching: "Looking in your data first…",
     database: "Answered from your data",
+    web: "Answered using web sources",
+    mixed: "Answered using your data and the web",
     cache: "Answered from a saved answer",
     ai: "Not in your data, answered by AI",
     local: "Instant reply (no AI needed)",
@@ -33,7 +36,7 @@ function Sources({ citations }) {
           <button className="chip" onClick={() => setOpen(open === c.index ? null : c.index)} aria-expanded={open === c.index}>
             [{c.index}] {c.title || c.doc_id}
           </button>
-          {open === c.index && <p className="snippet">{c.snippet}</p>}
+          {open === c.index && <p className="snippet">{c.snippet}{c.url && <> <a href={c.url} target="_blank" rel="noreferrer">Open source</a></>}</p>}
         </div>
       ))}
     </div>
@@ -44,10 +47,26 @@ const FILE_BADGE = { pdf: "PDF", docx: "Word file", xlsx: "Excel file" };
 
 function Message({ m }) {
   const [saved, setSaved] = useState(false);
+  const [highlighted, setHighlighted] = useState({});
+  useEffect(() => {
+    if (m.streaming || m.role !== "assistant") return;
+    const blocks = [...m.content.matchAll(/```([^\n`]*)\n([\s\S]*?)```/g)];
+    if (!blocks.length) { setHighlighted({}); return; }
+    const langs = blocks.map((match) => match[1].trim().split(/\s+/, 1)[0] || "");
+    const payload = blocks.map((match, i) => `${langs[i]}\0${match[2]}`);
+    let active = true;
+    api.highlightCode(payload).then((result) => {
+      if (!active) return;
+      const map = {};
+      blocks.forEach((match, i) => { map[`${langs[i]}\0${match[2]}`] = result.html?.[i] || ""; });
+      setHighlighted(map);
+    }).catch(() => { if (active) setHighlighted({}); });
+    return () => { active = false; };
+  }, [m.content, m.streaming, m.role]);
   if (m.role === "user") return <div className="msg user">{m.content}</div>;
   const src = m.meta?.source;
   const badge =
-    src === "database" ? "From your data" : src === "search" ? "Fast search · your data" : src === "cache" ? "Saved answer" : src === "ai" ? `AI · ${m.meta.provider}` : src === "local" ? "Instant reply" : src === "file" ? (FILE_BADGE[m.meta.provider] || `Image · ${m.meta.provider === "local" ? "own AI" : m.meta.provider}${m.meta.style ? ` · ${m.meta.style}` : ""}`) : src === "none" ? "Not found" : null;
+    src === "database" ? "From your data" : src === "mixed" ? "Your data + web" : src === "web" ? "Web sources" : src === "search" ? "Fast search · your data" : src === "cache" ? "Saved answer" : src === "ai" ? `AI · ${m.meta.provider}` : src === "local" ? "Instant reply" : src === "file" ? (FILE_BADGE[m.meta.provider] || `Image · ${m.meta.provider === "local" ? "own AI" : m.meta.provider}${m.meta.style ? ` · ${m.meta.style}` : ""}`) : src === "none" ? "Not found" : null;
 
   const kind = src === "file" ? (["pdf", "docx", "xlsx"].includes(m.meta.provider) ? `kind-${m.meta.provider}` : "kind-image") : "";
 
@@ -56,11 +75,22 @@ function Message({ m }) {
     setSaved(true);
   }
 
+  const markdown = new MarkdownIt({
+    html: false,
+    linkify: true,
+    breaks: true,
+    highlight: (code, info) => {
+      const lang = (info || "").trim().split(/\s+/, 1)[0] || "";
+      return highlighted[`${lang}\0${code}`] || "";
+    },
+  });
+  const rendered = !m.streaming && m.content ? markdown.render(m.content) : "";
+
   return (
     <div className={`msg bot ${src || ""} ${kind}`}>
       {badge && <span className={`badge ${src === "search" || src === "local" ? "database" : src} ${kind}`}>{badge}{m.meta?.note?.startsWith("answered offline") ? " · offline" : ""}</span>}
       <div className="text">
-        {m.content}
+        {rendered ? <div className="markdown" dangerouslySetInnerHTML={{ __html: rendered }} /> : m.content}
         {m.streaming && <span className="caret" />}
         {!m.content && m.streaming && <span className="dots"><i /><i /><i /></span>}
       </div>
@@ -107,6 +137,9 @@ export default function Chat() {
   const [phase, setPhase] = useState("idle");
   const [convId, setConvId] = useState(null);
   const [refresh, setRefresh] = useState(0);
+  const [webSearch, setWebSearch] = useState(() => {
+    try { return localStorage.getItem("webSearch") === "1"; } catch { return false; }
+  });
   const endRef = useRef(null);
   const [fast, setFast] = useState(() => {
     try { return localStorage.getItem("fastSearch") === "1"; } catch { return false; }
@@ -144,7 +177,7 @@ export default function Chat() {
     setPhase("searching");
     const patch = (fn) => setMsgs((m) => [...m.slice(0, -1), fn(m[m.length - 1])]);
     try {
-      await streamChat({ question: q, mode: fast ? "search" : "ai", conversation_id: convId }, (ev) => {
+      await streamChat({ question: q, mode: fast ? "search" : "ai", web_search: !fast && webSearch, conversation_id: convId }, (ev) => {
         if (ev.type === "meta") {
           if (ev.conversation_id && ev.conversation_id !== convId) { setConvId(ev.conversation_id); setRefresh((x) => x + 1); }
           if (!ev.source) return;
@@ -213,6 +246,13 @@ export default function Chat() {
         <label className="check" style={{ marginBottom: 12 }}>
           <input type="checkbox" checked={fast} onChange={(e) => toggleFast(e.target.checked)} />
           Fast search: show matching records straight from my data, no AI (instant)
+        </label>
+        <label className="check" style={{ marginBottom: 12 }} title={fast ? "Turn off Fast search to use the web." : "Public web pages are fetched for this question."}>
+          <input type="checkbox" checked={webSearch} disabled={fast} onChange={(e) => {
+            setWebSearch(e.target.checked);
+            try { localStorage.setItem("webSearch", e.target.checked ? "1" : "0"); } catch { /* ignore */ }
+          }} />
+          Search the web too (slower; includes linked sources)
         </label>
       </section>
     </div>

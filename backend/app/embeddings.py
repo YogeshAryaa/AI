@@ -98,27 +98,46 @@ async def embed_queries(texts: list[str]) -> np.ndarray:
 
 
 # ------------------------------------------------------------ optional re-ranker
+DEFAULT_RERANKER_MODEL = "ms-marco-MultiBERT-L-12"
+
+
+def reranker_model_name() -> str | None:
+    configured = str(cfg.reranker_model or "").strip()
+    if configured.lower() == "off":
+        return None
+    return configured or DEFAULT_RERANKER_MODEL
+
+
 def _load_reranker():
     global _reranker
-    if _reranker is None and cfg.reranker_model:
+    model_name = reranker_model_name()
+    if _reranker is None and model_name:
         with _load_lock:
             if _reranker is None:
-                from sentence_transformers import CrossEncoder
+                from flashrank import Ranker
 
-                _reranker = CrossEncoder(cfg.reranker_model, max_length=512)
+                _reranker = Ranker(model_name=model_name, max_length=512)
     return _reranker
 
 
 def reranker_enabled() -> bool:
-    return bool(cfg.reranker_model)
+    return reranker_model_name() is not None
 
 
 async def rerank(query: str, texts: list[str]) -> list[float]:
-    model = _load_reranker()
+    model = await asyncio.to_thread(_load_reranker)
     if model is None or not texts:
         return []
-    scores = await asyncio.to_thread(model.predict, [(query, t) for t in texts], show_progress_bar=False)
-    return [float(s) for s in scores]
+    from flashrank import RerankRequest
+
+    request = RerankRequest(query=query, passages=[{"id": i, "text": t} for i, t in enumerate(texts)])
+    ranked = await asyncio.to_thread(model.rerank, request)
+    scores = [0.0] * len(texts)
+    for result in ranked:
+        idx = int(result["id"])
+        if 0 <= idx < len(scores):
+            scores[idx] = float(result.get("score", 0.0))
+    return scores
 
 
 # ------------------------------------------------------------ chunking

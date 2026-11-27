@@ -1,6 +1,7 @@
+import asyncio
 import logging
 
-from . import knowledge, llm, offline, intelligence, skill_hub
+from . import knowledge, llm, offline, intelligence, skill_hub, web_retrieval
 from .config import cfg
 from .embeddings import embed_query
 from .runtime_settings import get_runtime
@@ -154,11 +155,11 @@ def _is_not_found(text: str) -> bool | None:
 
 async def run_chat(question: str, history: list[dict], mode: str = "ai",
                    namespaces: list[str] | None = None, allow_ai: bool | None = None, doc: bool = False,
-                   doc_style: str | None = None):
+                   doc_style: str | None = None, web_search: bool = False):
     """Async generator of events: meta, token, error, done.
     mode "search" = database only, no AI (fast); mode "ai" = database first, then AI fallback.
     doc=True writes a longer, structured answer for a PDF (and skips the answer cache)."""
-    if cfg.use_langgraph:
+    if cfg.use_langgraph and not web_search:
         from .agentic_graph import run_agentic_chat
         async for ev in run_agentic_chat(question, history, mode, namespaces, allow_ai, doc, doc_style):
             yield ev
@@ -195,7 +196,7 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
     qv = await embed_query(q)
 
     # 1) saved answer
-    if s["cache_enabled"] and not doc:
+    if s["cache_enabled"] and not doc and not web_search:
         hit = await knowledge.cache_lookup(q, qv, s["cache_threshold"], namespaces)
         if hit and (ai_ok or hit.get("source") != "ai"):
             yield _meta("cache", q, 1.0, hit.get("citations", []), hit.get("provider"), hit.get("model"))
@@ -203,8 +204,15 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
             yield {"type": "done"}
             return
 
-    # 2) your data (hybrid search; a Hindi/Hinglish miss is retried with an English rewrite)
-    chunks, confidence, exact = await knowledge.retrieve(q, qv, s["top_k"], namespaces)
+    # 2) Search private data and the public web concurrently when requested.
+    retrievals = [knowledge.retrieve(q, qv, s["top_k"], namespaces)]
+    if web_search:
+        retrievals.append(web_retrieval.search(q))
+    got = await asyncio.gather(*retrievals, return_exceptions=True)
+    if isinstance(got[0], Exception):
+        raise got[0]
+    chunks, confidence, exact = got[0]
+    web_results = got[1] if web_search and len(got) > 1 and not isinstance(got[1], Exception) else []
     if not (exact or confidence >= loose) and s["query_rewrite"] and intelligence.needs_rewrite(q):
         rq = await _ask(REWRITE_SYSTEM, q, trusted_only, 60)
         if rq and rq.lower() != q.lower() and len(rq) < 500:
@@ -212,11 +220,20 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
             if ex2 or conf2 > confidence:
                 chunks, confidence, exact = c2, conf2, ex2
     citations = _citations(chunks)
+    web_citations = [{"index": len(citations) + i + 1, "doc_id": r["url"], "title": r["title"],
+                      "source": "web", "url": r["url"], "snippet": r["text"][:300]}
+                     for i, r in enumerate(web_results)]
+    all_citations = citations + web_citations
 
-    if chunks and (exact or confidence >= loose):
+    if (chunks and (exact or confidence >= loose)) or web_results:
+        context_parts = [f"[{i + 1}] (Internal data: {c.get('title')}) {c['text']}"
+                         for i, c in enumerate(chunks)]
+        context_parts.extend(f"[{i}] (Web: {r['title']} | {r['url']}) {r['text']}"
+                             for i, r in enumerate(web_results, start=len(chunks) + 1))
+        context = "\n\n".join(context_parts)[:s["max_context_chars"]]
         messages = [
             {"role": "system", "content": GROUNDED_SYSTEM + style},
-            {"role": "user", "content": f"CONTEXT:\n{_context(chunks, s['max_context_chars'])}\n\nQUESTION: {q}"},
+            {"role": "user", "content": f"CONTEXT:\n{context}\n\nQUESTION: {q}"},
         ]
         buf, parts, pmeta = [], [], {}
         decided, not_found, failed = False, False, False
@@ -238,7 +255,8 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
                     if verdict is False:
                         decided = True
                         parts.append("".join(buf))
-                        yield _meta("database", q, confidence, citations, pmeta.get("provider"), pmeta.get("model"))
+                        src = "mixed" if chunks and web_results else "web" if web_results else "database"
+                        yield _meta(src, q, confidence, all_citations, pmeta.get("provider"), pmeta.get("model"))
                         yield {"type": "token", "text": "".join(buf)}
                 elif ev["type"] == "error":
                     failed = True
@@ -246,6 +264,18 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
         except llm.AllProvidersFailed:
             # No AI could write the answer: show the best passages instead of failing.
             good = _best_matches(chunks, strict)  # no AI to double-check: only a clear match counts
+            if web_results:
+                src = "mixed" if good else "web"
+                fallback_web = [{**c, "index": len(good) + i + 1} for i, c in enumerate(web_citations)]
+                yield _meta(src, q, confidence, (_citations(good) if good else []) + fallback_web,
+                            note="showing sources because no AI provider is available")
+                lines = [f"[{len(good) + i}] {r['title']} — {r['text'][:500]}\n{r['url']}"
+                         for i, r in enumerate(web_results, start=1)]
+                if good:
+                    lines.insert(0, "Relevant internal records:\n" + offline.answer_from_data(good, q))
+                yield {"type": "token", "text": "\n\n".join(lines)}
+                yield {"type": "done"}
+                return
             if not good:
                 yield _meta("none", q, confidence, note="no AI available")
                 yield {"type": "token", "text": offline.not_found(question)}
@@ -262,11 +292,12 @@ async def run_chat(question: str, history: list[dict], mode: str = "ai",
             if not not_found:
                 decided = True
                 parts.append("".join(buf))
-                yield _meta("database", q, confidence, citations, pmeta.get("provider"), pmeta.get("model"))
+                src = "mixed" if chunks and web_results else "web" if web_results else "database"
+                yield _meta(src, q, confidence, all_citations, pmeta.get("provider"), pmeta.get("model"))
                 yield {"type": "token", "text": "".join(buf)}
         if decided:
-            if parts and not failed and not doc:
-                await knowledge.cache_store(q, qv, "".join(parts), "database", citations,
+            if parts and not failed and not doc and not web_search:
+                await knowledge.cache_store(q, qv, "".join(parts), "database", all_citations,
                                             pmeta.get("provider"), pmeta.get("model"), namespaces)
             yield {"type": "done"}
             return
